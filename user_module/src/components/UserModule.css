@@ -1,0 +1,39 @@
+/* src/components/UserModule.css */
+
+.user-module {
+    display: flex;
+    height: 100vh; /* Full height */
+  }
+  
+  .sidebar {
+    width: 25%;
+    border-right: 1px solid #ccc; /* Optional border for separation */
+    padding: 20px;
+    display: flex;
+  flex-direction: column; 
+  /* justify-content: space-between;  */
+  }
+  
+  .sidebar button {
+    flex: 0 1 auto;
+    /* display: block; */
+    margin: 5px;
+    padding: 20px 15px;
+    border: none;
+    border-radius: 10px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    /* width: 100%; */
+  }
+  
+  .sidebar button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .content {
+    width: 70%;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+  }
