@@ -1,0 +1,159 @@
+/* Navbar Styling */
+.navbar {
+  background-color: #fff8e1; /* Light Yellow Background */
+  padding: 15px 30px;
+  display: flex;
+  justify-content: center; /* Center align contents */
+  align-items: center;
+  width: 100%;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Navbar container for proper spacing */
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 1200px;
+}
+
+/* Logo Section */
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Main Logo */
+.main-logo {
+  height: 50px;
+  width: auto;
+}
+
+/* Header Logo */
+.header-logo {
+  height: 40px;
+  width: auto;
+}
+
+/* Navigation Links */
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 40px;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  transition: color 0.3s ease-in-out;
+}
+
+.nav-links a:hover {
+  color: #c1a310; /* Golden hover effect */
+}
+
+/* Right Section (Cart & Auth Buttons) */
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Cart Icon */
+.cart-icon {
+  cursor: pointer;
+  color: #000;
+  transition: color 0.3s ease-in-out;
+}
+
+.cart-icon:hover {
+  color: #c1a310;
+}
+
+/* Auth Buttons */
+.auth-btn {
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+  transition: 0.3s ease-in-out;
+}
+
+.auth-btn:hover {
+  color: #c1a310;
+}
+
+.auth-btn.register {
+  background-color: #c1a310;
+  color: white;
+  border-radius: 5px;
+  padding: 8px 16px;
+}
+
+.auth-btn.register:hover {
+  background-color: #a08a0a;
+}
+/* Profile Icon */
+.profile-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-icon {
+  cursor: pointer;
+  color: #000;
+  transition: color 0.3s ease-in-out;
+}
+
+.profile-icon:hover {
+  color: #c1a310; /* Golden hover effect */
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  position: absolute;
+  top: 40px; /* Adjust to position it below the icon */
+  right: 0;
+  background: white;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  width: 200px;
+  padding: 10px;
+  text-align: center;
+  z-index: 1000;
+}
+
+.profile-dropdown p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background-color: #c1a310;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-top: 5px;
+  transition: 0.3s ease-in-out;
+  width: 100%;
+}
+
+.logout-btn:hover {
+  background-color: #a08a0a;
+}

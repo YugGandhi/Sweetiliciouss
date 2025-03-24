@@ -1,0 +1,28 @@
+/* Reset Default Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Set Background and Text Colors */
+  body {
+    background-color: #fff8e1; /* Light Yellow */
+    color: #452B1C; /* Brown */
+  }
+  
+  /* Common Button Styling */
+  .btn {
+    background-color: #f8b400; /* Yellow */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .btn:hover {
+    background-color: #ff9900;
+  }
+  
