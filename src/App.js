@@ -2,27 +2,39 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import ProductPage from "./pages/ProductPage"; // ✅ Single dynamic product page
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegistrationForm";
 import AdminDashboard from "./pages/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import CartPage from "./pages/CartPage";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; 
+import { CartProvider } from "./context/CartContext";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
+import OrdersPage from "./pages/OrdersPage";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Function to fetch user from localStorage
     const fetchUser = () => {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      console.log("🔍 Stored User in App.js:", storedUser);
-      setUser(storedUser);
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) {
+          setLoading(false);
+          return;
+        }
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        localStorage.removeItem("user");
+        toast.error("Session data was corrupted. Please log in again.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Call it once on mount
     fetchUser();
-
-    // ✅ Listen for changes to localStorage (for login/logout updates)
     window.addEventListener("userUpdated", fetchUser);
 
     return () => {
@@ -30,39 +42,93 @@ function App() {
     };
   }, []);
 
-  const handleLogin = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-    window.dispatchEvent(new Event("userUpdated")); // ✅ Ensure App.js updates after login
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    window.dispatchEvent(new Event("userUpdated")); // ✅ Ensure App.js updates after logout
+    try {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      setUser(null);
+      window.dispatchEvent(new Event("userUpdated"));
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.error("Error during logout");
+    }
   };
 
-  const isAdmin = user?.isAdmin;
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
 
   return (
-    <Router>
-      <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
-
-      <Routes>
-        <Route path="/" element={<Home onLogout={handleLogout} />} />
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* ✅ Dynamic Product Page */}
-        <Route path="/product/:id" element={<ProductPage />} />
-
-        {/* ✅ Admin Route with Correct Redirection */}
-        <Route
-          path="/admin"
-          element={isAdmin ? <AdminDashboard onLogout={handleLogout} /> : <Navigate to="/" replace />}
+    <CartProvider>
+      <Router>
+        <ToastContainer 
+          position="top-right" 
+          autoClose={2000} 
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
         />
-      </Routes>
-    </Router>
+
+        <Routes>
+          <Route path="/" element={<Home user={user} onLogout={handleLogout} />} />
+          
+          <Route path="/product/:id" element={<ProductPage user={user} />} />
+          
+          <Route 
+            path="/cart" 
+            element={<CartPage user={user} onLogout={handleLogout} />}
+          />
+          
+          <Route 
+            path="/checkout" 
+            element={
+              user ? <CheckoutPage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
+            }
+          />
+          
+          <Route 
+            path="/order-confirmation/:orderId" 
+            element={
+              user ? <OrderConfirmationPage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
+            }
+          />
+          
+          <Route 
+            path="/order-tracking/:orderId"
+            element={
+              user ? <OrderTrackingPage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
+            }
+          />
+          
+          <Route 
+            path="/orders"
+            element={
+              user ? <OrdersPage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              !user ? (
+                <Navigate to="/" replace />
+              ) : user.isAdmin ? (
+                <AdminDashboard onLogout={handleLogout} isLoggedIn={true} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </CartProvider>
   );
 }
 

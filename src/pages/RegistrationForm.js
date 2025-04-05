@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 import "../styles/RegistrationForm.css";
+import { auth } from '../services/api';
 
 const RegistrationForm = ({ isOpen, onClose }) => {
+  const [loading, setLoading] = useState(false);
+  
   const formik = useFormik({
     initialValues: {
       fullName: "",
@@ -24,110 +27,124 @@ const RegistrationForm = ({ isOpen, onClose }) => {
     }),
     onSubmit: async (values) => {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          toast.success("Registration Successful! 🎉");
-
-          setTimeout(() => {
-            onClose();
-          }, 1000);
-        } else {
-          toast.error(data.message || "Registration failed");
-        }
+        setLoading(true);
+        const response = await auth.register(values);
+        console.log("Registration response:", response);
+        
+        toast.success("Registration Successful! 🎉");
+        
+        // Reset form
+        formik.resetForm();
+        
+        // Close modal after a short delay
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       } catch (error) {
-        toast.error("Server error. Please try again.");
+        console.error("Registration error:", error);
+        const errorMessage = error.response?.data?.message || "Registration failed";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
       }
     },
   });
 
+  // Don't render if not open
+  if (!isOpen) return null;
 
-return (
-  <div className={`modal-overlay ${isOpen ? "show" : "hide"}`} onClick={onClose}>
-    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-      <span className="close-btn" onClick={onClose}>&times;</span>
-      <h2 className="modal-title">Create Account</h2> {/* ✅ Updated Title */}
-      <p className="modal-subtitle">Join us for exclusive deals & a delightful experience.</p> {/* ✅ New Subtitle */}
-      
-      <form onSubmit={formik.handleSubmit} className="registration-form">
+  return (
+    <div className="modal-overlay show" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <span className="close-btn" onClick={onClose}>&times;</span>
+        <h2 className="modal-title">Create Account</h2>
+        <p className="modal-subtitle">Join us for exclusive deals & a delightful experience.</p>
         
-        {/* Full Name Field */}
-        <div className="form-group">
-          <label htmlFor="fullName">Full Name</label>
-          <input
-            id="fullName"
-            type="text"
-            {...formik.getFieldProps("fullName")}
-            className={formik.touched.fullName && formik.errors.fullName ? "input-error" : ""}
-          />
-          {formik.touched.fullName && formik.errors.fullName ? (
-            <p className="error-message">{formik.errors.fullName}</p>
-          ) : null}
-        </div>
+        <form onSubmit={formik.handleSubmit} className="registration-form">
+          
+          {/* Full Name Field */}
+          <div className="form-group">
+            <label htmlFor="fullName">Full Name</label>
+            <input
+              id="fullName"
+              type="text"
+              {...formik.getFieldProps("fullName")}
+              className={formik.touched.fullName && formik.errors.fullName ? "input-error" : ""}
+              disabled={loading}
+            />
+            {formik.touched.fullName && formik.errors.fullName ? (
+              <p className="error-message">{formik.errors.fullName}</p>
+            ) : null}
+          </div>
 
-        {/* Phone Number Field */}
-        <div className="form-group">
-          <label htmlFor="phoneNumber">Phone Number</label>
-          <input
-            id="phoneNumber"
-            type="text"
-            {...formik.getFieldProps("phoneNumber")}
-            className={formik.touched.phoneNumber && formik.errors.phoneNumber ? "input-error" : ""}
-          />
-          {formik.touched.phoneNumber && formik.errors.phoneNumber ? (
-            <p className="error-message">{formik.errors.phoneNumber}</p>
-          ) : null}
-        </div>
+          {/* Phone Number Field */}
+          <div className="form-group">
+            <label htmlFor="phoneNumber">Phone Number</label>
+            <input
+              id="phoneNumber"
+              type="text"
+              {...formik.getFieldProps("phoneNumber")}
+              className={formik.touched.phoneNumber && formik.errors.phoneNumber ? "input-error" : ""}
+              disabled={loading}
+            />
+            {formik.touched.phoneNumber && formik.errors.phoneNumber ? (
+              <p className="error-message">{formik.errors.phoneNumber}</p>
+            ) : null}
+          </div>
 
-        {/* Email Address Field */}
-        <div className="form-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            id="email"
-            type="email"
-            {...formik.getFieldProps("email")}
-            className={formik.touched.email && formik.errors.email ? "input-error" : ""}
-          />
-          {formik.touched.email && formik.errors.email ? (
-            <p className="error-message">{formik.errors.email}</p>
-          ) : null}
-        </div>
+          {/* Email Address Field */}
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              {...formik.getFieldProps("email")}
+              className={formik.touched.email && formik.errors.email ? "input-error" : ""}
+              disabled={loading}
+            />
+            {formik.touched.email && formik.errors.email ? (
+              <p className="error-message">{formik.errors.email}</p>
+            ) : null}
+          </div>
 
-        {/* Address Field */}
-        <div className="form-group">
-          <label htmlFor="address">Address</label>
-          <input
-            id="address"
-            type="text"
-            {...formik.getFieldProps("address")}
-            className={formik.touched.address && formik.errors.address ? "input-error" : ""}
-          />
-          {formik.touched.address && formik.errors.address ? (
-            <p className="error-message">{formik.errors.address}</p>
-          ) : null}
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            {...formik.getFieldProps("password")}
-            className={formik.touched.password && formik.errors.password ? "input-error" : ""}
-          />
-          {formik.touched.password && formik.errors.password ? (
-            <p className="error-message">{formik.errors.password}</p>
-          ) : null}
-        </div>
-        <button type="submit" className="submit-button">Create Account</button>
-      </form>
+          {/* Address Field */}
+          <div className="form-group">
+            <label htmlFor="address">Address</label>
+            <input
+              id="address"
+              type="text"
+              {...formik.getFieldProps("address")}
+              className={formik.touched.address && formik.errors.address ? "input-error" : ""}
+              disabled={loading}
+            />
+            {formik.touched.address && formik.errors.address ? (
+              <p className="error-message">{formik.errors.address}</p>
+            ) : null}
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              {...formik.getFieldProps("password")}
+              className={formik.touched.password && formik.errors.password ? "input-error" : ""}
+              disabled={loading}
+            />
+            {formik.touched.password && formik.errors.password ? (
+              <p className="error-message">{formik.errors.password}</p>
+            ) : null}
+          </div>
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={loading}
+          >
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default RegistrationForm;

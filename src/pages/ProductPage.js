@@ -1,30 +1,44 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; // Get ID from URL
+import { useParams } from "react-router-dom";
 import "../styles/ProductPage.css";
 import Header from "../components/Navbar";
 import Footer from "../components/Footer";
 import io from "socket.io-client";
+import { sweets as sweetsApi } from "../services/api";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-toastify";
 
 const socket = io("http://localhost:5000", { autoConnect: false });
 
-const ProductPage = () => {
-  const { id } = useParams(); // Get sweet ID from URL
+const ProductPage = ({ user }) => {
+  const { id } = useParams();
   const [sweet, setSweet] = useState(null);
   const [mainImg, setMainImg] = useState("");
   const [selectedSize, setSelectedSize] = useState("250g");
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const { addToCart } = useCart();
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
     const fetchSweet = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/sweets/${id}`);
-        const data = await response.json();
+        setLoading(true);
+        const { data } = await sweetsApi.getOne(id);
         setSweet(data);
-        setMainImg(data.photos[0]); // Set first image as default
+        if (data.photos && data.photos.length > 0) {
+          setMainImg(data.photos[0]);
+        }
+        setError(null);
       } catch (error) {
         console.error("Error fetching sweet:", error);
+        setError("Failed to load product. Please try again.");
+        toast.error("Failed to load product");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -37,7 +51,9 @@ const ProductPage = () => {
     socket.on("sweetUpdated", (updatedSweet) => {
       if (updatedSweet._id === id) {
         setSweet(updatedSweet);
-        setMainImg(updatedSweet.photos[0]);
+        if (updatedSweet.photos && updatedSweet.photos.length > 0) {
+          setMainImg(updatedSweet.photos[0]);
+        }
       }
     });
 
@@ -61,8 +77,73 @@ const ProductPage = () => {
     }
   };
 
+  const handleAddToCart = () => {
+    if (!sweet) return;
+    
+    const sizeKey = selectedSize === "250g" ? "quantity250g" : 
+                   selectedSize === "500g" ? "quantity500g" : "quantity1kg";
+    
+    // Check availability
+    if (sweet[sizeKey] < quantity) {
+      toast.error(`Only ${sweet[sizeKey]} ${selectedSize} packages available`);
+      return;
+    }
+    
+    // Create cart item with selected size and quantity
+    const cartItem = {
+      ...sweet,
+      _id: `${sweet._id}-${selectedSize}`, // Make unique ID for each size
+      selectedSize,
+      quantity,
+      price: selectedSize === "250g" ? sweet.price / 4 : 
+             selectedSize === "500g" ? sweet.price / 2 : sweet.price
+    };
+    
+    addToCart(cartItem);
+    toast.success(`${sweet.name} (${selectedSize}) added to cart!`);
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading product...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <div className="error-container">
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()} className="retry-btn">
+            Try Again
+          </button>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   if (!sweet) {
-    return <p>Loading...</p>;
+    return (
+      <>
+        <Header />
+        <div className="error-container">
+          <p>Product not found</p>
+          <button onClick={() => window.history.back()} className="back-btn">
+            Go Back
+          </button>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   // Price calculation
@@ -81,10 +162,26 @@ const ProductPage = () => {
         <div className="container">
           {/* Left - Product Images */}
           <div className="product-gallery">
-            <img className="main-image" src={mainImg} alt={sweet.name} />
+            {mainImg ? (
+              <img className="main-image" src={mainImg} alt={sweet.name} onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-image.jpg';
+              }} />
+            ) : (
+              <div className="main-image placeholder">No Image Available</div>
+            )}
             <div className="thumbnail-images">
-              {sweet.photos.map((photo, index) => (
-                <img key={index} src={photo} alt={`Thumbnail ${index}`} onClick={() => setMainImg(photo)} />
+              {sweet.photos && sweet.photos.map((photo, index) => (
+                <img 
+                  key={index} 
+                  src={photo} 
+                  alt={`Thumbnail ${index}`} 
+                  onClick={() => setMainImg(photo)}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/placeholder-image.jpg';
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -114,31 +211,46 @@ const ProductPage = () => {
 
             {/* Price Display */}
             <div className="price-section">
-              <p className="default-price"><strong>Rs.</strong> ₹{priceMap[selectedSize].toFixed(2)}</p>
+              <p className="default-price"><strong>Price:</strong> ₹{priceMap[selectedSize].toFixed(2)}</p>
               <p className="total-price"><strong>Subtotal:</strong> ₹{totalPrice.toFixed(2)}</p>
             </div>
 
             {/* Size Selection */}
             <div className="size-selection">
-              {Object.keys(priceMap).map((size) => (
-                <button
-                  key={size}
-                  className={`size-btn ${selectedSize === size ? "selected" : ""}`}
-                  onClick={() => handleSizeSelect(size)}
-                >
-                  {size}
-                </button>
-              ))}
+              {Object.keys(priceMap).map((size) => {
+                const sizeKey = size === "250g" ? "quantity250g" : 
+                               size === "500g" ? "quantity500g" : "quantity1kg";
+                const inStock = sweet[sizeKey] > 0;
+                
+                return (
+                  <button
+                    key={size}
+                    className={`size-btn ${selectedSize === size ? "selected" : ""} ${!inStock ? "out-of-stock" : ""}`}
+                    onClick={() => inStock && handleSizeSelect(size)}
+                    disabled={!inStock}
+                  >
+                    {size}
+                    {!inStock && <span className="stock-label">Out of Stock</span>}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Quantity & Add to Cart */}
             <div className="quantity-cart">
               <div className="quantity-selector">
-                <button onClick={decrementQuantity}>−</button>
+                <button onClick={decrementQuantity} disabled={quantity <= 1}>−</button>
                 <span>{quantity}</span>
                 <button onClick={incrementQuantity}>+</button>
               </div>
-              <button className="add-to-cart">Add to Cart</button>
+              <button 
+                className="add-to-cart"
+                onClick={handleAddToCart}
+                disabled={sweet[selectedSize === "250g" ? "quantity250g" : 
+                        selectedSize === "500g" ? "quantity500g" : "quantity1kg"] < quantity}
+              >
+                Add to Cart
+              </button>
             </div>
           </div>
         </div>

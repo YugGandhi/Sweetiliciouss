@@ -5,14 +5,20 @@ import headerLogo from "../assets/Sweetlicious_logo_2.png";
 import { FaShoppingCart, FaUserCircle } from "react-icons/fa"; 
 import RegistrationForm from "../pages/RegistrationForm";
 import LoginPage from "../pages/LoginPage";
+import { useCart } from "../context/CartContext";
+import { Link } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ onLogout }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // ✅ State for dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { cartItems } = useCart();
 
-  // ✅ Update user whenever login happens
+  // Calculate total items in cart
+  const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // Update user whenever login happens
   useEffect(() => {
     const updateUser = () => {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -28,17 +34,23 @@ const Navbar = () => {
   const handleLogin = (userData) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
-    window.dispatchEvent(new Event("userUpdated")); // ✅ Notify other components
+    window.dispatchEvent(new Event("userUpdated")); // Notify other components
     setIsLoginOpen(false);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
+    if (onLogout) {
+      onLogout();
+    } else {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      setUser(null);
+      window.dispatchEvent(new Event("userUpdated"));
+    }
     setIsDropdownOpen(false); // Close dropdown on logout
   };
 
-  // ✅ Close dropdown when clicking outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".profile-dropdown") && !event.target.closest(".profile-icon")) {
@@ -55,13 +67,15 @@ const Navbar = () => {
         <div className="navbar-container">
           {/* Logo Section */}
           <div className="logo-section">
-            <img src={mainLogo} alt="Sweetiliciouss Logo" className="main-logo" />
-            <img src={headerLogo} alt="Sweetiliciouss Header" className="header-logo" />
+            <Link to="/">
+              <img src={mainLogo} alt="Sweetiliciouss Logo" className="main-logo" />
+              <img src={headerLogo} alt="Sweetiliciouss Header" className="header-logo" />
+            </Link>
           </div>
 
           {/* Navigation Links */}
           <ul className="nav-links">
-            <li><a href="#home">Home</a></li>
+            <li><Link to="/">Home</Link></li>
             <li><a href="#products">Products</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -69,24 +83,31 @@ const Navbar = () => {
 
           {/* Right Section */}
           <div className="right-section">
-            <div className="cart-icon">
+            <Link to="/cart" className="cart-icon-container">
               <FaShoppingCart size={24} />
-            </div>
+              {cartItemCount > 0 && (
+                <span className="cart-count">{cartItemCount}</span>
+              )}
+            </Link>
 
             {user ? (
               <div className="profile-container">
-                {/* ✅ Profile Icon */}
+                {/* Profile Icon */}
                 <FaUserCircle 
                   className="profile-icon" 
                   size={32} 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 />
 
-                {/* ✅ Dropdown (Only Visible When isDropdownOpen is True) */}
+                {/* Dropdown (Only Visible When isDropdownOpen is True) */}
                 {isDropdownOpen && (
                   <div className="profile-dropdown">
                     <p className="user-name">{user.fullName}</p>
                     <p className="user-email">{user.email}</p>
+                    <Link to="/orders" className="dropdown-link">View Orders</Link>
+                    {user.isAdmin && (
+                      <Link to="/admin" className="admin-link">Admin Dashboard</Link>
+                    )}
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>
                   </div>
                 )}

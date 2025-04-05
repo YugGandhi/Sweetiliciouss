@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import "../styles/Products.css"; 
 import { Link } from "react-router-dom";
 import io from "socket.io-client";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-toastify";
 
 const socket = io("http://localhost:5000", { autoConnect: false }); // Prevent auto-reconnect loops
 
 const Products = () => {
   const [sweets, setSweets] = useState([]);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchSweets = async () => {
@@ -16,6 +19,7 @@ const Products = () => {
         setSweets(data);
       } catch (error) {
         console.error("Error fetching sweets:", error);
+        toast.error("Failed to load sweets. Please try again later.");
       }
     };
 
@@ -49,6 +53,11 @@ const Products = () => {
     };
   }, []);
 
+  const handleAddToCart = (sweet) => {
+    addToCart(sweet);
+    toast.success(`${sweet.name} added to cart!`);
+  };
+
   return (
     <section className="products" id="products">
       <h2 className="section-title">Sweetiliciouss's Top Picks</h2>
@@ -61,9 +70,17 @@ const Products = () => {
             </div>
             <h3>{sweet.name}</h3>
             <p className="product-description-static">Price: ₹{sweet.price}</p>
-            <Link to={`/product/${sweet._id}`}>
-              <button className="buy-btn">Order Now</button>
-            </Link>
+            <div className="product-actions">
+              <button 
+                className="add-to-cart-btn"
+                onClick={() => handleAddToCart(sweet)}
+              >
+                Add to Cart
+              </button>
+              <Link to={`/product/${sweet._id}`}>
+                <button className="view-details-btn">View Details</button>
+              </Link>
+            </div>
           </div>
         ))}
       </div>

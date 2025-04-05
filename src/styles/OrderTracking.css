@@ -1,0 +1,278 @@
+.tracking-page-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.order-tracking-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.order-tracking-container h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.order-id-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.order-id-section h2 {
+  color: #4CAF50;
+  margin-bottom: 0.5rem;
+}
+
+.order-id-section p {
+  color: #666;
+}
+
+/* Order Status Section */
+.order-status-section {
+  margin-bottom: 2rem;
+}
+
+.order-status-section h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  color: white;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+/* Progress Track */
+.order-progress {
+  margin-top: 1.5rem;
+}
+
+.progress-track {
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+}
+
+.step {
+  font-size: 0.875rem;
+  color: #6c757d;
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.step.active {
+  color: #333;
+  font-weight: 500;
+}
+
+/* Order Details Section */
+.order-details-section {
+  border-top: 1px solid #eee;
+  padding-top: 2rem;
+}
+
+.order-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.order-details-header h3 {
+  color: #333;
+  margin: 0;
+}
+
+/* Order Items */
+.order-items {
+  margin-bottom: 1.5rem;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 0.5rem;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.item-quantity {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.item-price {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Order Summary */
+.order-summary {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 4px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.summary-row.total {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Actions */
+.tracking-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.back-home-btn,
+.cancel-order-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+  cursor: pointer;
+}
+
+.back-home-btn {
+  background-color: #e9ecef;
+  color: #333;
+  border: none;
+}
+
+.cancel-order-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+.back-home-btn:hover {
+  background-color: #dee2e6;
+}
+
+.cancel-order-btn:hover {
+  background-color: #c82333;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px solid #4CAF50;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error */
+.error-container {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.error-container h2 {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.retry-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.retry-btn:hover {
+  background-color: #45a049;
+}
+
+/* No Orders */
+.no-orders {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tracking-actions {
+    flex-direction: column;
+  }
+  
+  .order-tracking-container {
+    padding: 1.5rem;
+  }
+  
+  .order-id-section h2 {
+    font-size: 1.5rem;
+  }
+} 

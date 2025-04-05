@@ -1,60 +1,73 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
-import { toast } from "react-toastify"; // ✅ Import Toastify
-import "../styles/LoginPage.css"; 
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "../styles/LoginPage.css";
+import { auth } from '../services/api';
 
-const LoginPage = ({ isOpen, onClose }) => {
+const LoginPage = ({ isOpen, onClose, onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // Initialize navigate
+  const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      console.log("✅ Frontend Login Response:", data); // Debugging
-
-      if (response.ok && data.token) {
+      const response = await auth.login({ email, password });
+      console.log("Login response:", response);
+      
+      const { data } = response;
+      
+      if (data && data.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify({ email: data.email, fullName: data.fullName, isAdmin: data.isAdmin }));
+        
+        // The API returns user data in data.user, not at the root level
+        const userData = {
+          email: data.user?.email,
+          fullName: data.user?.fullName,
+          isAdmin: data.user?.isAdmin,
+          id: data.user?.id || data.user?._id
+        };
+        
+        console.log("User data for login:", userData);
+        
+        // Call the onLogin callback
+        onLogin(userData);
+        
+        // Show success notification
+        toast.success("Login Successful!");
 
-        window.dispatchEvent(new Event("userUpdated")); // Ensure Navbar updates
-
-        // ✅ Show success toast notification
-        toast.success("Login Successful! 🎉");
-
-        // ✅ Close the login popup after 1 second
-        setTimeout(() => {
-          onClose();
-        }, 1000);
-
-        // ✅ Ensure correct redirection
-        setTimeout(() => {
-          if (data.isAdmin) {
+        // Close the modal
+        onClose();
+        
+        // Navigate after 1 second if admin
+        if (userData.isAdmin) {
+          setTimeout(() => {
             navigate("/admin");
-          } else {
-            navigate("/");
-          }
-        }, 1000);
+          }, 1000);
+        }
       } else {
-        setError(data.message || "Invalid credentials");
+        setError("Invalid response from server");
       }
     } catch (error) {
-      setError("Server error. Please try again.");
+      console.error("Login error:", error);
+      setError(error.response?.data?.message || "Login failed. Please check your credentials.");
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Don't render if not open
+  if (!isOpen) return null;
+
   return (
-    <div className={`modal-overlay ${isOpen ? "show" : "hide"}`} onClick={onClose}>
+    <div className="modal-overlay show" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <span className="close-btn" onClick={onClose}>&times;</span>
         <h2 className="modal-title">Login</h2>
@@ -72,6 +85,7 @@ const LoginPage = ({ isOpen, onClose }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -84,10 +98,17 @@ const LoginPage = ({ isOpen, onClose }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="submit-button">Login</button>
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
       </div>
     </div>
