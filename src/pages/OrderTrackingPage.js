@@ -27,11 +27,15 @@ const OrderTrackingPage = ({ user, onLogout }) => {
       
       // First try to get all orders
       const { data } = await ordersApi.getAll();
+      console.log("Orders response:", data);
       const foundOrder = data.find(o => o._id === orderId);
       
       if (foundOrder) {
+        console.log("Found order:", foundOrder);
         setOrder(foundOrder);
       } else {
+        console.error("Order not found in response:", orderId);
+        console.error("Available orders:", data.map(o => o._id));
         setError('Order not found');
         toast.error('Order not found');
       }
@@ -64,6 +68,29 @@ const OrderTrackingPage = ({ user, onLogout }) => {
       'Cancelled': 0
     };
     return steps[status] || 0;
+  };
+
+  const getStatusDescription = (status) => {
+    const descriptions = {
+      'Pending': 'Your order has been received and is awaiting processing.',
+      'Processing': 'Your order is being prepared and packed.',
+      'Shipped': 'Your order has been shipped and is on its way to your delivery address.',
+      'Delivered': 'Your order has been delivered. Enjoy your sweets!',
+      'Cancelled': 'This order has been cancelled.'
+    };
+    return descriptions[status] || 'Status information unavailable.';
+  };
+
+  const getEstimatedDelivery = (createdDate, status) => {
+    if (status === 'Cancelled') return 'N/A';
+    if (status === 'Delivered') return 'Order already delivered';
+    
+    const orderDate = new Date(createdDate);
+    const estimatedDays = 3; // Default 3 days for delivery
+    const estimatedDate = new Date(orderDate);
+    estimatedDate.setDate(orderDate.getDate() + estimatedDays);
+    
+    return formatDate(estimatedDate);
   };
 
   // Format price with commas and 2 decimal places
@@ -124,6 +151,20 @@ const OrderTrackingPage = ({ user, onLogout }) => {
                 {order.status}
               </div>
               
+              <p className="status-description">{getStatusDescription(order.status)}</p>
+              
+              {order.paymentMethod === 'cash' && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                <div className="cod-reminder">
+                  <p>
+                    <strong>Cash on Delivery:</strong> Please keep {formatPrice(order.totalAmount)} ready for payment upon delivery.
+                  </p>
+                </div>
+              )}
+              
+              <div className="delivery-estimate">
+                <p><strong>Estimated Delivery:</strong> {getEstimatedDelivery(order.createdAt, order.status)}</p>
+              </div>
+              
               <div className="order-progress">
                 <div className="progress-track">
                   <div 
@@ -169,6 +210,18 @@ const OrderTrackingPage = ({ user, onLogout }) => {
               </div>
               
               <div className="order-summary">
+                <div className="summary-row">
+                  <span>Customer Name:</span>
+                  <span>{order.user?.fullName || user?.fullName || 'N/A'}</span>
+                </div>
+                <div className="summary-row">
+                  <span>Customer Email:</span>
+                  <span>{order.user?.email || user?.email || 'N/A'}</span>
+                </div>
+                <div className="summary-row">
+                  <span>Customer Phone:</span>
+                  <span>{order.user?.phoneNumber || user?.phoneNumber || 'N/A'}</span>
+                </div>
                 <div className="summary-row">
                   <span>Shipping Address:</span>
                   <span>{order.shippingAddress}</span>

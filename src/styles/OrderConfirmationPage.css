@@ -31,12 +31,14 @@
 
 .order-info,
 .shipping-info,
+.customer-info,
 .order-items-summary {
   margin-bottom: 2rem;
 }
 
 .order-info h2,
 .shipping-info h2,
+.customer-info h2,
 .order-items-summary h2 {
   margin-bottom: 1rem;
   color: #333;
@@ -228,4 +230,61 @@
   .order-details-card {
     padding: 1.5rem;
   }
+}
+
+.payment-instructions {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.payment-instructions h2 {
+  color: #4CAF50;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.cod-details {
+  background-color: #f9f9f9;
+  border-left: 4px solid #4CAF50;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.cod-details p {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.cod-details ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.cod-details li {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.cod-details strong {
+  color: #333;
+}
+
+/* Customer info styling */
+.customer-info {
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.customer-info .info-row {
+  border-bottom: 1px solid #eee;
 } 

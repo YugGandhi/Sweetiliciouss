@@ -69,11 +69,20 @@ router.delete('/:id', auth, async (req, res) => {
 // Create a notification (internal use only)
 const createNotification = async (userId, message, type = 'SYSTEM', orderId = null) => {
   try {
+    // Validate userId exists and is in proper format
+    if (!userId) {
+      console.error('createNotification: Missing userId parameter');
+      return null;
+    }
+    
+    // Handle case where userId might be an object with _id
+    const actualUserId = typeof userId === 'object' && userId._id ? userId._id.toString() : userId.toString();
+    
     const notification = new Notification({
-      userId,
+      userId: actualUserId,
       message,
       type,
-      orderId
+      orderId: orderId ? orderId.toString() : null
     });
     
     await notification.save();

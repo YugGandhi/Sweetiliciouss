@@ -104,6 +104,7 @@ const Navbar = ({ onLogout }) => {
                   <div className="profile-dropdown">
                     <p className="user-name">{user.fullName}</p>
                     <p className="user-email">{user.email}</p>
+                    <Link to="/profile" className="dropdown-link">My Profile</Link>
                     <Link to="/orders" className="dropdown-link">View Orders</Link>
                     {user.isAdmin && (
                       <Link to="/admin" className="admin-link">Admin Dashboard</Link>

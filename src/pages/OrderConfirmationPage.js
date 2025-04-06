@@ -16,11 +16,16 @@ const OrderConfirmationPage = ({ user, onLogout }) => {
     const fetchOrder = async () => {
       try {
         const response = await orders.getAll();
+        console.log("Orders response:", response);
         const foundOrder = response.data.find(o => o._id === orderId);
         
         if (foundOrder) {
+          console.log("Found order:", foundOrder);
+          console.log("Order user data:", foundOrder.user);
           setOrder(foundOrder);
         } else {
+          console.error("Order not found in response:", orderId);
+          console.error("Available orders:", response.data.map(o => o._id));
           setError('Order not found');
           toast.error('Order not found');
         }
@@ -97,6 +102,21 @@ const OrderConfirmationPage = ({ user, onLogout }) => {
           </p>
         </div>
 
+        {order.paymentMethod === 'cash' && (
+          <div className="payment-instructions">
+            <h2>Cash on Delivery Information</h2>
+            <div className="cod-details">
+              <p>You have selected <strong>Cash on Delivery</strong> as your payment method.</p>
+              <ul>
+                <li>Your order will be prepared and dispatched soon.</li>
+                <li>Payment will be collected by our delivery person when your order arrives.</li>
+                <li>Please ensure someone is available at the delivery address to receive the order and make the payment.</li>
+                <li>The exact amount to be paid on delivery: <strong>{formatPrice(order.totalAmount)}</strong></li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="order-details-card">
           <div className="order-info">
             <h2>Order Information</h2>
@@ -118,6 +138,22 @@ const OrderConfirmationPage = ({ user, onLogout }) => {
               <span>Payment Method:</span>
               <span>{order.paymentMethod === 'cash' ? 'Cash on Delivery' : 
                     order.paymentMethod === 'upi' ? 'UPI' : 'Credit/Debit Card'}</span>
+            </div>
+          </div>
+
+          <div className="customer-info">
+            <h2>Customer Information</h2>
+            <div className="info-row">
+              <span>Name:</span>
+              <span>{order.user?.fullName || user?.fullName || 'N/A'}</span>
+            </div>
+            <div className="info-row">
+              <span>Email:</span>
+              <span>{order.user?.email || user?.email || 'N/A'}</span>
+            </div>
+            <div className="info-row">
+              <span>Phone:</span>
+              <span>{order.user?.phoneNumber || user?.phoneNumber || 'N/A'}</span>
             </div>
           </div>
 

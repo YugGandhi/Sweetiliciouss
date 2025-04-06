@@ -108,9 +108,18 @@ const CartPage = ({ user, onLogout }) => {
                 <span>Total:</span>
                 <span>₹{formatPrice(total)}</span>
               </div>
-              <Link to="/checkout" className="checkout-btn">
-                Proceed to Checkout
-              </Link>
+              {user ? (
+                <Link to="/checkout" className="checkout-btn">
+                  Proceed to Checkout
+                </Link>
+              ) : (
+                <div className="login-prompt">
+                  <p>Please log in to checkout</p>
+                  <Link to="/login" className="login-btn">
+                    Login to Continue
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -25,14 +25,40 @@ const OrdersPage = ({ user, onLogout }) => {
       setLoading(true);
       setError(null);
       
-      // Get all orders and filter for the current user
-      const response = await ordersApi.getAll();
-      const userOrders = response.data.filter(order => order.user === user.id);
-      
-      // Sort orders by date (newest first)
-      userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-      setOrders(userOrders);
+      // Try to get user's orders directly
+      try {
+        const response = await ordersApi.getUserOrders(user.id);
+        
+        // Sort orders by date (newest first)
+        const sortedOrders = response.data.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        
+        setOrders(sortedOrders);
+      } catch (error) {
+        // If there's an error with the specific endpoint, try the more flexible approach
+        const response = await ordersApi.getAll();
+        
+        // Filter for the current user's orders
+        const userOrders = response.data.filter(order => {
+          // Check if user is an object
+          if (order.user && typeof order.user === 'object' && order.user._id) {
+            return order.user._id === user.id;
+          }
+          
+          // Check if user is a string
+          if (typeof order.user === 'string') {
+            return order.user === user.id;
+          }
+          
+          return false;
+        });
+        
+        // Sort orders by date (newest first)
+        userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setOrders(userOrders);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       setError('Failed to load your orders. Please try again later.');
@@ -131,6 +157,15 @@ const OrdersPage = ({ user, onLogout }) => {
                   <div className="order-total-amount">
                     <span>Total: {formatPrice(order.totalAmount)}</span>
                   </div>
+                </div>
+                
+                <div className="order-customer-info">
+                  <p>
+                    <strong>Customer:</strong> {order.user?.fullName || user?.fullName || 'N/A'}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {order.user?.email || user?.email || 'N/A'}
+                  </p>
                 </div>
                 
                 <div className="order-actions">

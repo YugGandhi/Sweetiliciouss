@@ -14,7 +14,8 @@ const CheckoutPage = ({ user, onLogout }) => {
   const [formData, setFormData] = useState({
     shippingAddress: user?.address || '',
     paymentMethod: 'cash',
-    notes: ''
+    notes: '',
+    phoneNumber: user?.phoneNumber || ''
   });
 
   // If no user or empty cart, redirect to home
@@ -45,21 +46,34 @@ const CheckoutPage = ({ user, onLogout }) => {
       const orderItems = cartItems.map(item => ({
         sweet: item._id,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        selectedSize: item.selectedSize || "1kg" // Add selected size
       }));
 
       // Create order object
       const orderData = {
-        user: user.id,
+        user: {
+          _id: user.id,
+          fullName: user.fullName || "Unknown",
+          email: user.email || "Unknown",
+          phoneNumber: formData.phoneNumber || user.phoneNumber || "Not provided"
+        },
         items: orderItems,
         totalAmount: total,
         shippingAddress: formData.shippingAddress,
         paymentMethod: formData.paymentMethod,
-        notes: formData.notes
+        notes: formData.notes || ""
       };
 
       // Send order to server
       const response = await orders.create(orderData);
+      
+      // Extract the order ID
+      const orderId = response.data.order._id;
+      
+      if (!orderId) {
+        throw new Error("Order was created but no ID was returned");
+      }
       
       // Clear the cart
       clearCart();
@@ -68,10 +82,16 @@ const CheckoutPage = ({ user, onLogout }) => {
       toast.success('Order placed successfully!');
       
       // Redirect to confirmation page with order ID
-      navigate(`/order-confirmation/${response.data.order._id}`);
+      navigate(`/order-confirmation/${orderId}`);
     } catch (error) {
       console.error('Error placing order:', error);
-      toast.error('Failed to place order. Please try again.');
+      
+      // Get more specific error message if available
+      const errorMessage = error.response?.data?.error || 
+                           error.response?.data?.details || 
+                           'Failed to place order. Please try again.';
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -118,9 +138,22 @@ const CheckoutPage = ({ user, onLogout }) => {
                   disabled={loading}
                 >
                   <option value="cash">Cash on Delivery</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Credit/Debit Card</option>
+                  <option value="upi" disabled>UPI (Coming Soon)</option>
+                  <option value="card" disabled>Credit/Debit Card (Coming Soon)</option>
                 </select>
+                
+                {formData.paymentMethod === 'cash' && (
+                  <div className="payment-method-info">
+                    <p>
+                      <strong>Cash on Delivery:</strong> Pay when your order arrives. Our delivery person will collect the payment.
+                    </p>
+                    <ul>
+                      <li>Please keep exact change ready</li>
+                      <li>You'll receive updates about your order status</li>
+                      <li>You can track your order on the order confirmation page</li>
+                    </ul>
+                  </div>
+                )}
               </div>
               
               <div className="form-group">
@@ -131,6 +164,18 @@ const CheckoutPage = ({ user, onLogout }) => {
                   value={formData.notes}
                   onChange={handleChange}
                   placeholder="Any special instructions for your order"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="phoneNumber">Phone Number</label>
+                <input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
                   disabled={loading}
                 />
               </div>

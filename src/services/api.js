@@ -65,6 +65,7 @@ export const auth = {
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  updatePassword: (data) => api.put('/auth/password', data),
   getUsers: () => api.get('/auth/users')
 };
 
@@ -72,8 +73,10 @@ export const auth = {
 export const orders = {
   create: (data) => api.post('/orders', data),
   getAll: () => api.get('/orders'),
+  getById: (orderId) => api.get(`/orders/order/${orderId}`),
   getUserOrders: (userId) => api.get(`/orders/user/${userId}`),
   updateStatus: (orderId, status) => api.put(`/orders/${orderId}`, { status }),
+  updatePaymentStatus: (orderId, paymentStatus) => api.put(`/orders/${orderId}/payment-status`, { paymentStatus }),
   cancelOrder: (orderId) => api.put(`/orders/${orderId}/cancel`),
   search: (params) => api.get('/orders/search', { params })
 };

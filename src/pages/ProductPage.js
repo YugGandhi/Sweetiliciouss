@@ -3,12 +3,10 @@ import { useParams } from "react-router-dom";
 import "../styles/ProductPage.css";
 import Header from "../components/Navbar";
 import Footer from "../components/Footer";
-import io from "socket.io-client";
+import { getSocket } from "../services/socketService";
 import { sweets as sweetsApi } from "../services/api";
 import { useCart } from "../context/CartContext";
 import { toast } from "react-toastify";
-
-const socket = io("http://localhost:5000", { autoConnect: false });
 
 const ProductPage = ({ user }) => {
   const { id } = useParams();
@@ -44,9 +42,8 @@ const ProductPage = ({ user }) => {
 
     fetchSweet();
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+    // Get the shared socket instance
+    const socket = getSocket();
 
     socket.on("sweetUpdated", (updatedSweet) => {
       if (updatedSweet._id === id) {
@@ -58,8 +55,10 @@ const ProductPage = ({ user }) => {
     });
 
     return () => {
-      socket.off("sweetUpdated");
-      socket.disconnect();
+      if (socket) {
+        socket.off("sweetUpdated");
+        // Don't disconnect here - other components may be using it
+      }
     };
   }, [id]);
 
@@ -189,8 +188,9 @@ const ProductPage = ({ user }) => {
           {/* Right - Product Details */}
           <div className="product-details">
             <h1 className="product-title">{sweet.name}</h1>
-            <p className="product-description">{sweet.description}</p>
-
+            <p className="product-description">
+              Sugar-free sweets made with premium dry fruits, roasted in pure Gir Cow Ghee.
+            </p>
             {/* Product Highlights */}
             <div className="product-highlights">
               <div className="highlights-list">
@@ -258,7 +258,10 @@ const ProductPage = ({ user }) => {
         {/* Additional Information */}
         <div className="additional-info-container">
           <div className="additional-info">
-            <h3 className="info-title">Specific storage info</h3>
+            <h3 className="info-title">Description</h3>
+            <p className="product-description">{sweet.description || "Sugar-free sweets made with premium dry fruits, roasted in pure Gir Cow Ghee."}</p>
+            
+            <h3 className="info-title">Storage Information</h3>
             <p className="info-text">
               Once you receive the Sweet box, keep it in a cool and dry place. Ideal temperature is 25-28°C. 
               Avoid moisture and direct sunlight. Do not refrigerate. Store in an airtight container.
@@ -267,7 +270,7 @@ const ProductPage = ({ user }) => {
             <h3 className="info-title">Shelf Life</h3>
             <p className="info-text">45 days from the date of manufacturing.</p>
 
-            <h3 className="info-title">Info</h3>
+            <h3 className="info-title">Product Information</h3>
             <p className="info-text">This product contains no additives, preservatives, or artificial flavorings. It is 100% natural.</p>
           </div>
         </div>

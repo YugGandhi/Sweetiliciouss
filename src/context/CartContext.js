@@ -29,12 +29,14 @@ export const CartProvider = ({ children }) => {
       if (existingItem) {
         return prevItems.map(item =>
           item._id === sweet._id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + (sweet.quantity || quantity) }
             : item
         );
       }
       
-      return [...prevItems, { ...sweet, quantity }];
+      // Use the quantity from the sweet object if it exists, otherwise use the provided quantity parameter
+      const finalQuantity = sweet.quantity || quantity;
+      return [...prevItems, { ...sweet, quantity: finalQuantity }];
     });
   };
 

@@ -40,11 +40,13 @@ io.on("connection", (socket) => {
 // ✅ Import Routes (Pass io to sweetRoutes for real-time updates)
 const authRoutes = require("./routes/authRoutes");
 const sweetRoutes = require("./routes/sweetRoutes")(io);
-const orderRoutes = require("./routes/orderRoutes");
+const { router: orderRoutes } = require("./routes/orderRoutes");
+const { router: notificationRoutes } = require("./routes/notificationRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/sweets", sweetRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ✅ Route to Fetch Image Data from MongoDB
 app.get("/api/sweets/image/:id", async (req, res) => {

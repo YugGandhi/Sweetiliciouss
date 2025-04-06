@@ -11,6 +11,8 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import OrdersPage from "./pages/OrdersPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import { getSocket, disconnectSocket } from "./services/socketService";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -37,8 +39,12 @@ function App() {
     fetchUser();
     window.addEventListener("userUpdated", fetchUser);
 
+    // Initialize socket when app starts
+    const socket = getSocket();
+
     return () => {
       window.removeEventListener("userUpdated", fetchUser);
+      disconnectSocket();
     };
   }, []);
 
@@ -109,6 +115,13 @@ function App() {
             path="/orders"
             element={
               user ? <OrdersPage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
+            }
+          />
+          
+          <Route 
+            path="/profile"
+            element={
+              user ? <UserProfilePage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />
             }
           />
 
