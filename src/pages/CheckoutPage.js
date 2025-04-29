@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import '../styles/CheckoutPage.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
 
 const CheckoutPage = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -43,12 +44,15 @@ const CheckoutPage = ({ user, onLogout }) => {
 
     try {
       // Create order items array from cart items
-      const orderItems = cartItems.map(item => ({
-        sweet: item._id,
-        quantity: item.quantity,
-        price: item.price,
-        selectedSize: item.selectedSize || "1kg" // Add selected size
-      }));
+      const orderItems = cartItems
+        .map(item => ({
+          sweet: (item._id || item.sweet).toString().split('-')[0],
+          quantity: item.quantity,
+          price: item.price,
+          selectedSize: item.selectedSize || "1kg"
+        }))
+        .filter(item => /^[a-f\d]{24}$/i.test(item.sweet));
+      console.log("Order items to send:", orderItems);
 
       // Create order object
       const orderData = {
@@ -68,21 +72,32 @@ const CheckoutPage = ({ user, onLogout }) => {
       // Send order to server
       const response = await orders.create(orderData);
       
-      // Extract the order ID
-      const orderId = response.data.order._id;
+      // Extract the order data
+      const order = response.data.order;
       
-      if (!orderId) {
+      if (!order._id) {
         throw new Error("Order was created but no ID was returned");
       }
+
+      // Generate and download invoice
+      const pdf = generateInvoicePDF({
+        ...order,
+        user: {
+          ...order.user,
+          fullName: user.fullName,
+          email: user.email
+        }
+      });
+      pdf.save(`invoice-${order._id}.pdf`);
       
       // Clear the cart
       clearCart();
       
       // Show success message
-      toast.success('Order placed successfully!');
+      toast.success('Order placed successfully! Invoice downloaded.');
       
       // Redirect to confirmation page with order ID
-      navigate(`/order-confirmation/${orderId}`);
+      navigate(`/order-confirmation/${order._id}`);
     } catch (error) {
       console.error('Error placing order:', error);
       

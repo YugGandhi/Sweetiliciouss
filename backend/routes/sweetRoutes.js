@@ -11,7 +11,16 @@ module.exports = (io) => {
   // ✅ Fetch all sweets (Return Image URLs instead of Binary Data)
   router.get("/", async (req, res) => {
     try {
-      const sweets = await Sweet.find();
+      // Only fetch necessary fields, exclude photos.data
+      const sweets = await Sweet.find({}, {
+        name: 1,
+        description: 1,
+        quantity250g: 1,
+        quantity500g: 1,
+        quantity1kg: 1,
+        price: 1,
+        photos: 1 // Only fetch metadata, not binary data
+      });
 
       // Convert binary images into URL format
       const formattedSweets = sweets.map(sweet => ({
@@ -22,7 +31,7 @@ module.exports = (io) => {
         quantity500g: sweet.quantity500g,
         quantity1kg: sweet.quantity1kg,
         price: sweet.price,
-        photos: sweet.photos.map((_, index) => `http://localhost:5000/api/sweets/image/${sweet._id}/${index}`)
+        photos: (sweet.photos || []).map((_, index) => `http://localhost:5001/api/sweets/image/${sweet._id}/${index}`)
       }));
 
       res.json(formattedSweets);
@@ -46,7 +55,7 @@ module.exports = (io) => {
         quantity500g: sweet.quantity500g,
         quantity1kg: sweet.quantity1kg,
         price: sweet.price,
-        photos: sweet.photos.map((_, index) => `http://localhost:5000/api/sweets/image/${sweet._id}/${index}`)
+        photos: sweet.photos.map((_, index) => `http://localhost:5001/api/sweets/image/${sweet._id}/${index}`)
       };
 
       res.json(formattedSweet);
@@ -58,21 +67,29 @@ module.exports = (io) => {
   // ✅ Fetch an image by sweet ID and image index
   router.get("/image/:id/:index", async (req, res) => {
     try {
+      console.log("Fetching image for sweet:", req.params.id, "index:", req.params.index);
       const sweet = await Sweet.findById(req.params.id);
+      console.log("Sweet found:", !!sweet, "Photos length:", sweet?.photos?.length);
       if (!sweet || !sweet.photos.length || !sweet.photos[req.params.index]) {
-        return res.status(404).json({ error: "Image not found" });
+        console.log("Image not found for sweet", req.params.id, "index", req.params.index);
+        // Serve a static placeholder image
+        return res.sendFile(require('path').resolve(__dirname, '../public/placeholder-image.jpg'));
       }
 
       res.set("Content-Type", sweet.photos[req.params.index].contentType);
       res.send(sweet.photos[req.params.index].data);
     } catch (err) {
-      res.status(500).json({ error: "Failed to fetch image" });
+      console.error("[IMAGE FETCH ERROR]", err);
+      // Serve a static placeholder image on error
+      return res.sendFile(require('path').resolve(__dirname, '../public/placeholder-image.jpg'));
     }
   });
 
   // ✅ Add a new sweet with images (Emit `sweetAdded` event)
   router.post("/", upload.array("photos", 3), async (req, res) => {
     try {
+      console.log("[ADD SWEET] req.body:", req.body);
+      console.log("[ADD SWEET] req.files:", req.files);
       const { name, quantity250g, quantity500g, quantity1kg, price, description } = req.body;
 
       const photos = req.files.map((file, index) => ({
@@ -93,12 +110,13 @@ module.exports = (io) => {
         quantity500g: newSweet.quantity500g,
         quantity1kg: newSweet.quantity1kg,
         price: newSweet.price,
-        photos: newSweet.photos.map((_, index) => `http://localhost:5000/api/sweets/image/${newSweet._id}/${index}`)
+        photos: newSweet.photos.map((_, index) => `http://localhost:5001/api/sweets/image/${newSweet._id}/${index}`)
       });
 
       res.status(201).json(newSweet);
     } catch (err) {
-      res.status(400).json({ error: "Failed to add sweet" });
+      console.error("[ADD SWEET ERROR]", err);
+      res.status(400).json({ error: err.message || "Failed to add sweet" });
     }
   });
 
@@ -132,7 +150,7 @@ module.exports = (io) => {
         quantity500g: updatedSweet.quantity500g,
         quantity1kg: updatedSweet.quantity1kg,
         price: updatedSweet.price,
-        photos: updatedSweet.photos.map((_, index) => `http://localhost:5000/api/sweets/image/${updatedSweet._id}/${index}`)
+        photos: updatedSweet.photos.map((_, index) => `http://localhost:5001/api/sweets/image/${updatedSweet._id}/${index}`)
       });
 
       res.json(updatedSweet);
@@ -152,6 +170,62 @@ module.exports = (io) => {
       res.json({ message: "Sweet deleted" });
     } catch (err) {
       res.status(500).json({ error: "Failed to delete sweet" });
+    }
+  });
+
+  // DEBUG: Fetch all sweets with just _id, name, and photoCount
+  router.get("/debug", async (req, res) => {
+    try {
+      const sweets = await Sweet.find({}, { name: 1, photos: 1 });
+      const debugData = sweets.map(sweet => ({
+        _id: sweet._id,
+        name: sweet.name,
+        photoCount: sweet.photos ? sweet.photos.length : 0
+      }));
+      res.json(debugData);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch debug sweets" });
+    }
+  });
+
+  // DEBUG: Log problematic sweets (bad or huge photos field)
+  router.get("/debug-log", async (req, res) => {
+    try {
+      const sweets = await Sweet.find({}, { name: 1, photos: 1 });
+      let issues = 0;
+      sweets.forEach(sweet => {
+        if (!Array.isArray(sweet.photos) || sweet.photos === null || sweet.photos === undefined) {
+          console.log("[BAD PHOTOS FIELD]", sweet._id, sweet.name, sweet.photos);
+          issues++;
+        } else if (sweet.photos.length > 10) {
+          console.log("[TOO MANY PHOTOS]", sweet._id, sweet.name, "photoCount:", sweet.photos.length);
+          issues++;
+        }
+      });
+      res.json({ message: `Scan complete. Problematic documents logged to server console. Issues found: ${issues}` });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to scan sweets for issues" });
+    }
+  });
+
+  // Update sweet stock (Admin only)
+  router.put("/:id/stock", require("../middleware/auth"), async (req, res) => {
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const { quantity250g, quantity500g, quantity1kg } = req.body;
+      const sweet = await Sweet.findByIdAndUpdate(
+        req.params.id,
+        { quantity250g, quantity500g, quantity1kg },
+        { new: true }
+      );
+      if (!sweet) {
+        return res.status(404).json({ error: "Sweet not found" });
+      }
+      res.json(sweet);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update stock" });
     }
   });
 

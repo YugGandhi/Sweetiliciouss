@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -111,7 +111,8 @@ export const sweets = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
-  delete: (id) => api.delete(`/sweets/${id}`)
+  delete: (id) => api.delete(`/sweets/${id}`),
+  updateStock: (id, data) => api.put(`/sweets/${id}/stock`, data)
 };
 
 // Notifications API
@@ -122,4 +123,4 @@ export const notifications = {
   delete: (notificationId) => api.delete(`/notifications/${notificationId}`)
 };
 
-export default api; 
+export default api;

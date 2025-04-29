@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import '../styles/OrderTracking.css';
@@ -12,30 +12,19 @@ const OrderTrackingPage = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (orderId) {
-      fetchOrderDetails();
-    } else {
-      setLoading(false);
-    }
-  }, [orderId]);
-
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // First try to get all orders
-      const { data } = await ordersApi.getAll();
-      console.log("Orders response:", data);
-      const foundOrder = data.find(o => o._id === orderId);
+      // Use the specific order endpoint
+      const { data } = await ordersApi.getById(orderId);
       
-      if (foundOrder) {
-        console.log("Found order:", foundOrder);
-        setOrder(foundOrder);
+      if (data) {
+        console.log("Found order:", data);
+        setOrder(data);
       } else {
-        console.error("Order not found in response:", orderId);
-        console.error("Available orders:", data.map(o => o._id));
+        console.error("Order not found:", orderId);
         setError('Order not found');
         toast.error('Order not found');
       }
@@ -46,7 +35,15 @@ const OrderTrackingPage = ({ user, onLogout }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    if (orderId) {
+      fetchOrderDetails();
+    } else {
+      setLoading(false);
+    }
+  }, [orderId, fetchOrderDetails]);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -113,7 +110,6 @@ const OrderTrackingPage = ({ user, onLogout }) => {
     };
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
-
   return (
     <>
       <Navbar user={user} onLogout={onLogout} />

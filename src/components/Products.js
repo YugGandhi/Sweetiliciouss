@@ -84,15 +84,22 @@ const Products = () => {
           sweets.map((sweet) => (
             <div className="product-card" key={sweet._id}>
               <div className="product-image-container">
-                <img 
-                  src={sweet.photos && sweet.photos.length > 0 ? sweet.photos[0] : '/placeholder-image.jpg'} 
-                  alt={sweet.name} 
-                  className="product-image" 
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/placeholder-image.jpg';
-                  }} 
-                />
+                {(() => {
+                  const imageUrl = sweet.photos && sweet.photos.length > 0 ? sweet.photos[0] : '/placeholder-image.jpg';
+                  console.log('Product:', sweet.name, 'Photos:', sweet.photos, 'Image URL:', imageUrl);
+                  return (
+                    <img 
+                      src={imageUrl}
+                      alt={sweet.name}
+                      className="product-image"
+                      onError={e => {
+                        console.warn('Image failed to load:', e.target.src, sweet);
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                  );
+                })()}
                 <div className="product-description-hover">
                   <p className="product-description">
                     Sugar-free sweets made with premium dry fruits, roasted in pure Gir Cow Ghee.

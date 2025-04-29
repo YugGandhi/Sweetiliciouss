@@ -42,7 +42,7 @@
 }
 
 .profile-nav li.active {
-  background-color: #4CAF50;
+  background-color: #8B4513;
   color: white;
   font-weight: 500;
 }
@@ -92,8 +92,8 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  border-color: #8B4513;
+  box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.2);
 }
 
 .form-group input:disabled {
@@ -110,7 +110,7 @@
 
 .submit-btn {
   padding: 0.75rem 1.5rem;
-  background-color: #4CAF50;
+  background-color: #8B4513;
   color: white;
   border: none;
   border-radius: 4px;
@@ -121,7 +121,7 @@
 }
 
 .submit-btn:hover {
-  background-color: #45a049;
+  background-color: #A0522D;
 }
 
 .submit-btn:disabled {
@@ -204,14 +204,14 @@
 }
 
 .address-card.default {
-  border-color: #4CAF50;
+  border-color: #8B4513;
 }
 
 .default-badge {
   position: absolute;
   top: 0;
   right: 0;
-  background-color: #4CAF50;
+  background-color: #8B4513;
   color: white;
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;

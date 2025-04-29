@@ -5,10 +5,12 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     required: false
   },
-  items: {
-    type: Array,
-    default: []
-  },
+  items: [{
+    sweet: { type: mongoose.Schema.Types.ObjectId, ref: 'Sweet' },
+    quantity: Number,
+    price: Number,
+    selectedSize: String
+  }],
   totalAmount: { 
     type: Number, 
     required: false,

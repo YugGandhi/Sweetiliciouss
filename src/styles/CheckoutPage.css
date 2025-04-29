@@ -67,7 +67,7 @@
 .place-order-btn {
   width: 100%;
   padding: 1rem;
-  background-color: #4CAF50;
+  background-color: #8B4513;
   color: white;
   border: none;
   border-radius: 4px;
@@ -78,7 +78,7 @@
 }
 
 .place-order-btn:hover {
-  background-color: #45a049;
+  background-color: #A0522D;
 }
 
 .place-order-btn:disabled {
@@ -92,6 +92,7 @@
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-left: 3px solid #8B4513;
 }
 
 .order-summary h2 {

@@ -3,18 +3,33 @@ const router = express.Router();
 const Order = require("../models/Order");
 const auth = require("../middleware/auth");
 const { createNotification } = require("./notificationRoutes");
+const mongoose = require('mongoose');
 
 // Place an Order
 router.post("/", auth, async (req, res) => {
   try {
-    // Log the raw request for debugging
-    console.log("📩 Raw Order Request:", JSON.stringify(req.body));
-
-    // Create a new order directly from the request data
-    // No validation, just use what was sent
+    console.log("Order creation request body:", JSON.stringify(req.body, null, 2));
+    // Validate required fields
+    if (!req.body.user || !req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
+      return res.status(400).json({ error: "Missing user or items in order" });
+    }
+    // Accept both string and ObjectId for sweet
+    const orderItems = req.body.items.map(item => {
+      if (!item.sweet || !item.quantity) {
+        throw new Error("Each item must have a sweet and quantity");
+      }
+      return {
+        sweet: (typeof item.sweet === 'string' && /^[a-fA-F0-9]{24}$/.test(item.sweet))
+          ? new mongoose.Types.ObjectId(item.sweet)
+          : item.sweet,
+        quantity: item.quantity,
+        price: item.price,
+        selectedSize: item.selectedSize
+      };
+    });
     const newOrder = new Order({
       user: req.body.user,
-      items: req.body.items || [],
+      items: orderItems,
       totalAmount: req.body.totalAmount || 0,
       shippingAddress: req.body.shippingAddress || '',
       paymentMethod: req.body.paymentMethod || 'cash',
@@ -22,20 +37,15 @@ router.post("/", auth, async (req, res) => {
       status: 'Pending',
       paymentStatus: 'Pending'
     });
-
-    // Save to database
     const savedOrder = await newOrder.save();
     console.log("✅ Order saved to database:", savedOrder._id);
-
-    // Return success response
-    res.status(201).json({ 
-      success: true, 
-      message: "Order placed successfully", 
-      order: savedOrder 
+    res.status(201).json({
+      success: true,
+      message: "Order placed successfully",
+      order: savedOrder
     });
   } catch (err) {
     console.error("❌ Order Creation Error:", err.message);
-    console.error("Stack trace:", err.stack);
     res.status(400).json({ error: "Failed to place order", details: err.message });
   }
 });
@@ -48,7 +58,7 @@ router.get("/", auth, async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find().sort({ createdAt: -1 }).populate('items.sweet');
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch orders" });
@@ -96,33 +106,37 @@ router.get("/user/:userId", auth, async (req, res) => {
 // Update Order Status (Admin)
 router.put("/:id", auth, async (req, res) => {
   try {
-    // Check if user is admin
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: "Access denied" });
     }
-
     const { status } = req.body;
     const order = await Order.findByIdAndUpdate(
-      req.params.id, 
-      { status }, 
+      req.params.id,
+      { status },
       { new: true }
-    );
-
+    ).populate('items.sweet');
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-
-    // Create notification for status update
-    await createNotification(
-      order.user._id,
-      `Your order #${order._id} status has been updated to ${status}`,
-      'ORDER_STATUS',
-      order._id
-    );
-
+    console.log("Order status update:", order._id, "to", status);
+    if (status === 'Shipped' || status === 'Delivered') {
+      const Sweet = require("../models/Sweet");
+      for (const item of order.items) {
+        const sweetId = item.sweet?._id || item.sweet;
+        console.log("Decrementing stock for sweet:", sweetId, "size:", item.selectedSize, "qty:", item.quantity);
+        if (sweetId) {
+          let updateField = {};
+          if (item.selectedSize === "250g") updateField = { $inc: { quantity250g: -item.quantity } };
+          else if (item.selectedSize === "500g") updateField = { $inc: { quantity500g: -item.quantity } };
+          else if (item.selectedSize === "1kg") updateField = { $inc: { quantity1kg: -item.quantity } };
+          console.log("Update field:", updateField);
+          await Sweet.findByIdAndUpdate(sweetId, updateField);
+        }
+      }
+    }
     res.json(order);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update order status" });
+    res.status(500).json({ error: "Failed to update order status", details: err.message });
   }
 });
 
@@ -147,6 +161,18 @@ router.put("/:id/cancel", auth, async (req, res) => {
 
     order.status = 'Cancelled';
     await order.save();
+
+    // Restock sweets
+    const Sweet = require("../models/Sweet");
+    for (const item of order.items) {
+      if (item.sweet && item.sweet._id) {
+        let updateField = {};
+        if (item.selectedSize === "250g") updateField = { $inc: { quantity250g: item.quantity } };
+        else if (item.selectedSize === "500g") updateField = { $inc: { quantity500g: item.quantity } };
+        else if (item.selectedSize === "1kg") updateField = { $inc: { quantity1kg: item.quantity } };
+        await Sweet.findByIdAndUpdate(item.sweet._id, updateField);
+      }
+    }
 
     // Create notification for cancellation
     await createNotification(

@@ -8,6 +8,12 @@ import { sweets as sweetsApi } from "../services/api";
 import { useCart } from "../context/CartContext";
 import { toast } from "react-toastify";
 
+import naturalIngredientsIcon from "../assets/organic.png";
+import naturalIcon from "../assets/no-additives.png";
+import gheeIcon from "../assets/ghee.png";
+import nutrientsIcon from "../assets/premium-quality.png";
+
+
 const ProductPage = ({ user }) => {
   const { id } = useParams();
   const [sweet, setSweet] = useState(null);
@@ -16,12 +22,12 @@ const ProductPage = ({ user }) => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const { addToCart } = useCart();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
+
     const fetchSweet = async () => {
       try {
         setLoading(true);
@@ -78,26 +84,26 @@ const ProductPage = ({ user }) => {
 
   const handleAddToCart = () => {
     if (!sweet) return;
-    
-    const sizeKey = selectedSize === "250g" ? "quantity250g" : 
-                   selectedSize === "500g" ? "quantity500g" : "quantity1kg";
-    
+
+    const sizeKey = selectedSize === "250g" ? "quantity250g" :
+      selectedSize === "500g" ? "quantity500g" : "quantity1kg";
+
     // Check availability
     if (sweet[sizeKey] < quantity) {
       toast.error(`Only ${sweet[sizeKey]} ${selectedSize} packages available`);
       return;
     }
-    
+
     // Create cart item with selected size and quantity
     const cartItem = {
       ...sweet,
       _id: `${sweet._id}-${selectedSize}`, // Make unique ID for each size
       selectedSize,
       quantity,
-      price: selectedSize === "250g" ? sweet.price / 4 : 
-             selectedSize === "500g" ? sweet.price / 2 : sweet.price
+      price: selectedSize === "250g" ? sweet.price / 4 :
+        selectedSize === "500g" ? sweet.price / 2 : sweet.price
     };
-    
+
     addToCart(cartItem);
     toast.success(`${sweet.name} (${selectedSize}) added to cart!`);
   };
@@ -162,21 +168,28 @@ const ProductPage = ({ user }) => {
           {/* Left - Product Images */}
           <div className="product-gallery">
             {mainImg ? (
-              <img className="main-image" src={mainImg} alt={sweet.name} onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/placeholder-image.jpg';
-              }} />
+              <img
+                className="main-image"
+                src={sweet.photos && sweet.photos.length > 0 ? sweet.photos[0] : '/placeholder-image.jpg'}
+                alt={sweet.name}
+                onError={e => {
+                  console.warn('Image failed to load:', e.target.src);
+                  e.target.onerror = null;
+                  e.target.src = '/placeholder-image.jpg';
+                }}
+              />
             ) : (
               <div className="main-image placeholder">No Image Available</div>
             )}
             <div className="thumbnail-images">
               {sweet.photos && sweet.photos.map((photo, index) => (
-                <img 
-                  key={index} 
-                  src={photo} 
-                  alt={`Thumbnail ${index}`} 
+                <img
+                  key={index}
+                  src={photo}
+                  alt={`Thumbnail ${index}`}
                   onClick={() => setMainImg(photo)}
-                  onError={(e) => {
+                  onError={e => {
+                    console.warn('Image failed to load:', e.target.src);
                     e.target.onerror = null;
                     e.target.src = '/placeholder-image.jpg';
                   }}
@@ -195,15 +208,19 @@ const ProductPage = ({ user }) => {
             <div className="product-highlights">
               <div className="highlights-list">
                 <div className="highlight-item">
+                  <img src={naturalIngredientsIcon} alt="Natural Ingredients" />
                   <p>Natural Ingredients</p>
                 </div>
                 <div className="highlight-item">
+                  <img src={naturalIcon} alt="Natural" />
                   <p>No Artificial Flavor</p>
                 </div>
                 <div className="highlight-item">
+                  <img src={gheeIcon} alt="Ghee" />
                   <p>Made with Ghee</p>
                 </div>
                 <div className="highlight-item">
+                  <img src={nutrientsIcon} alt="Nutrients" />
                   <p>Premium Quality</p>
                 </div>
               </div>
@@ -218,10 +235,10 @@ const ProductPage = ({ user }) => {
             {/* Size Selection */}
             <div className="size-selection">
               {Object.keys(priceMap).map((size) => {
-                const sizeKey = size === "250g" ? "quantity250g" : 
-                               size === "500g" ? "quantity500g" : "quantity1kg";
+                const sizeKey = size === "250g" ? "quantity250g" :
+                  size === "500g" ? "quantity500g" : "quantity1kg";
                 const inStock = sweet[sizeKey] > 0;
-                
+
                 return (
                   <button
                     key={size}
@@ -243,11 +260,11 @@ const ProductPage = ({ user }) => {
                 <span>{quantity}</span>
                 <button onClick={incrementQuantity}>+</button>
               </div>
-              <button 
+              <button
                 className="add-to-cart"
                 onClick={handleAddToCart}
-                disabled={sweet[selectedSize === "250g" ? "quantity250g" : 
-                        selectedSize === "500g" ? "quantity500g" : "quantity1kg"] < quantity}
+                disabled={sweet[selectedSize === "250g" ? "quantity250g" :
+                  selectedSize === "500g" ? "quantity500g" : "quantity1kg"] < quantity}
               >
                 Add to Cart
               </button>
@@ -260,10 +277,10 @@ const ProductPage = ({ user }) => {
           <div className="additional-info">
             <h3 className="info-title">Description</h3>
             <p className="product-description">{sweet.description || "Sugar-free sweets made with premium dry fruits, roasted in pure Gir Cow Ghee."}</p>
-            
+
             <h3 className="info-title">Storage Information</h3>
             <p className="info-text">
-              Once you receive the Sweet box, keep it in a cool and dry place. Ideal temperature is 25-28°C. 
+              Once you receive the Sweet box, keep it in a cool and dry place. Ideal temperature is 25-28°C.
               Avoid moisture and direct sunlight. Do not refrigerate. Store in an airtight container.
             </p>
 

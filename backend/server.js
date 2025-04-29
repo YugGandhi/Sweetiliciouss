@@ -15,7 +15,7 @@ const io = socketIo(server, {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // ✅ Middleware
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
@@ -43,10 +43,17 @@ const sweetRoutes = require("./routes/sweetRoutes")(io);
 const { router: orderRoutes } = require("./routes/orderRoutes");
 const { router: notificationRoutes } = require("./routes/notificationRoutes");
 
+// Register routes with proper error handling
 app.use("/api/auth", authRoutes);
 app.use("/api/sweets", sweetRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+// Add route logging middleware
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // ✅ Route to Fetch Image Data from MongoDB
 app.get("/api/sweets/image/:id", async (req, res) => {

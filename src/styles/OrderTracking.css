@@ -309,4 +309,20 @@
   margin: 0;
   font-size: 0.95rem;
   color: #333;
+}
+
+.tracking-status {
+  color: #8B4513;
+}
+
+.tracking-card {
+  border-top: 5px solid #8B4513;
+}
+
+.track-order-btn {
+  background-color: #8B4513;
+}
+
+.track-order-btn:hover {
+  background-color: #A0522D;
 } 
